@@ -2,21 +2,21 @@ import RootNode from "./Form";
 
 
 abstract class ValueNode {
-  protected parentNode: ValueNode | RootNode;
+  protected parentNode: BranchNode | RootNode;
   protected name: string;
 
   constructor(parentNode, name) {
     this.parentNode = parentNode;
     this.name = name;
 
-    this.handleEvent = this.handleEvent.bind(this);
+    //this.handleEvent = this.handleEvent.bind(this);
   }
 
-  abstract handleEvent(event: string): boolean;
+  //abstract handleEvent(event: string): boolean;
 }
 
 class BranchNode extends ValueNode {
-
+  values: { [key: string]: any } | any[];
 }
 
 export default class InputNode extends ValueNode {

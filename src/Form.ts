@@ -2,6 +2,8 @@
 
 export default class RootNode {
 
+  values: { [key: string]: any } | any[];
+
   valid = true;
 
   eventEmmiter = new Publisher();
