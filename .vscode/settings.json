@@ -1,0 +1,44 @@
+{
+  "javascript.referencesCodeLens.enabled": false,
+  "javascript.implicitProjectConfig.checkJs": true,
+  "javascript.validate.enable": true,
+  
+  "editor.tabSize": 2,
+  "editor.semanticHighlighting.enabled": true,
+  "editor.tokenColorCustomizations": {
+    "[Default Dark+]": {
+      "textMateRules": [
+        {
+          "scope": ["variable.other.constant", "variable.other.enummember"],
+          "settings": {
+              "foreground": "#9cdcfe"
+          }
+        }
+      ]
+    }
+  },
+  
+  "emmet.triggerExpansionOnTab": true,
+
+  "explorer.autoReveal": false,
+
+  "files.exclude": {
+    "node_modules": true,
+    "package-lock.json": true,
+    "example/node_modules": true,
+    "example/package-lock.json": true
+  },
+
+  "todohighlight.keywords": [
+    {
+      "text": "DEBUG",
+      "color": "#ddddff",
+      "backgroundColor": "#2A52BE",
+    }
+  ],
+
+  "code-runner.executorMap": {
+    "javascript": "node --harmony",
+    "typescript": "node -r ts-node"
+  }
+}

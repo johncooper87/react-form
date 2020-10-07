@@ -1,0 +1,31 @@
+{
+  "configurations": [
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug in Chrome",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceRoot}",
+      "sourceMaps": true,
+      "userDataDir": "${workspaceRoot}/../_chrome",
+      "runtimeArgs": [
+        "--profile-directory=debug-profile"
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run",
+      "args": [
+        "${file}"
+      ],
+      // "runtimeArgs": [
+      //   "-r", "ts-node/register"
+      // ],
+      "skipFiles": [
+        "<node_internals>/**/*.js",
+        "${workspaceFolder}/node_modules/**/*.js"
+      ]
+    }
+  ]
+}
