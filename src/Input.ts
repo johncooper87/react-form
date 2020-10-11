@@ -5,17 +5,18 @@ import BranchNode from "./Branch";
 export default class InputNode {
   dirty = false;
   touched = false;
-  updateEvent = new Publisher();
+  update = (...args) => new Publisher().publish(...args);
+  dispatchEvent = (...args) => this.parent.dispatchEvent(...args);
 
-  protected parent: BranchNode | RootNode;
-  protected name: string;
+  protected _error: string;
+  protected _validate: (value: any) => string;
 
-  constructor(parent: BranchNode | RootNode, name: string) {
-    this.parent = parent;
-    this.name = name;
-
-    this.handleChange = this.handleChange.bind(this);
-    this.handleBlur = this.handleBlur.bind(this);
+  constructor(
+    protected parent: BranchNode | RootNode,
+    protected name: string
+  ) {
+    
+    this.handleAction = this.handleAction.bind(this);
   }
 
   get value() {
@@ -29,7 +30,7 @@ export default class InputNode {
     parent.values[name] = value;
 
     this.dirty = true;
-    parent.dispatchEvent('change', this);
+    dispatchEvent('change', this);
   }
 
   get initialValue() {
@@ -37,50 +38,62 @@ export default class InputNode {
     return parent.initialValues?.[name];
   }
 
-  handleBlur({ relatedTarget }) {
-    if (!this.touched
-      && !relatedTarget?.attributes['data-control']
-    ) {
-      this.touched = true;
-      this.updateEvent.publish();
+  get error() {
+    return this._error;
+  }
+
+  set validate(value) {
+    const { _validate } = this;
+    if (_validate === value) return;
+    this._validate = value;
+    const { parent, name, _error, update } = this;
+    const error = _validate?.(value) || parent.errors?.[name];
+    if (_error != error) {
+      this._error = error;
+      update();
     }
   }
 
-  handleEvent(event: string, ...args: any[]) {
+  handleAction(action: string, ...params: any[]) {
 
-    let shouldUpdate = false;
-
-    switch (event) {
+    switch (action) {
 
       case 'validate': {
-        const [inputNode] = args;
-        const { validate, value, parent, name } = this;
-        const error = validate(value) || parent.errors?.[name];
-        if (this.error !== error || inputNode === this) {
-          this.error = error;
-          this.update();
+        const [initiator] = params;
+        const { _validate, value, name, _error, update } = this;
+        const error = _validate?.(value) || parent.errors?.[name];
+        if (_error != error || initiator === this) {
+          this._error = error;
+          update();
         }
       }
 
       case 'reset': {
-        const [prevValue] = args;
-        shouldUpdate = this.error !== error || this.dirty || this.touched || prevValue !== this.value;
-        this.error = error;
-        this.dirty = false;
-        this.touched = false;
+        const [prevValues] = params;
+        const { _validate, value, name, _error, dirty, touched, update } = this;
+        const error = _validate?.(value) || parent.errors?.[name];
+        if (
+            _error != error
+            || dirty || touched
+            || prevValues?.[name] != value
+        ) {
+          this._error = error;
+          this.dirty = false;
+          this.touched = false;
+          update();
+        }
       }
 
       case 'submit': {
-        if (this.error && (!this.dirty || !this.touched)) {
+        const { _error, dirty, touched, update } = this;
+        if (_error && (!dirty || !touched)) {
           this.dirty = true;
           this.touched = true;
-          this.update();
+          update();
         }
       }
 
     }
-
-    return shouldUpdate;
 
   }
 
