@@ -4,36 +4,23 @@ export default class BranchNode {
 
   private updateEvent = new Publisher();
   private action = new Publisher();
-  private _parent: BranchNode | RootNode;
-  private _name: string;
-  private _root: RootNode;
-  private _validate: (values: { [key: string]: any } | any[]) => { [key: string]: any } | any[];
-  private _values: { [key: string]: any } | any[];
-  private _errors: { [key: string]: any } | any[];
-  private _dirty = false;
-  private _touched = false;
+  root: RootNode;
+  _values: { [key: string]: any } | any[];
+  errors: { [key: string]: any } | any[];
+  dirty = false;
+  touched = false;
 
   //values: { [key: string]: any } | any[];
 
   constructor(
-    parent: BranchNode | RootNode,
-    name: string,
-    validate: (values: { [key: string]: any } | any[]) => { [key: string]: any } | any[]
+    public parent: BranchNode | RootNode,
+    public name: string,
+    public validate: (values: { [key: string]: any } | any[]) => { [key: string]: any } | any[]
   ) {
 
-    this._parent = parent;
-    this._name = name;
-    this._root = parent.root;
-    this._validate = validate;
-
+    this.root = parent.root;
+    this.revalidate();
   }
-
-  get parent() { return this._parent; }
-  get name() { return this._name; }
-  get root() { return this._root; }
-  get errors() { return this._errors; }
-  get dirty() { return this._dirty; }
-  get touched() { return this._touched; }
 
   get values() {
     return this._values;
@@ -46,7 +33,7 @@ export default class BranchNode {
     parent.values[name] = this._values;
   }
 
-  private getErrors() {
+  revalidate() {
     const errors = this._validate?.(this.values);
     //if (errors?.keys().length() > 0) this.root.dispatchEvent('error');
     if (errors) this.root.dispatchEvent('error');
@@ -58,7 +45,7 @@ export default class BranchNode {
     switch (event) {
 
       case 'change': {
-        this.dispatchEvent('change', this, ...params);
+        this.parent.dispatchEvent('change', this, ...params);
       }
     }
 
@@ -70,7 +57,7 @@ export default class BranchNode {
 
       case 'validate': {
         const [initiator, ...nodes] = params;
-        const errors = this.getErrors();
+        const errors = this.revalidate();
         if (this.errors != errors || initiator === this) {
           this._errors = errors;
           this.action.publish('validate', ...nodes);
@@ -80,7 +67,7 @@ export default class BranchNode {
       case 'reset': {
         const [previousValues] = params;
         const _previousValues = previousValues?.[this.name];
-        const errors = this.getErrors();
+        const errors = this.revalidate();
         if (
           this.errors != errors
           || this.dirty || this.touched
