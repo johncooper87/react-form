@@ -1,27 +1,40 @@
 import RootNode from "./Root";
 import BranchNode from "./Branch";
 
-
 export default class InputNode {
-  dirty = false;
-  touched = false;
-  update = (...args) => new Publisher().publish(...args);
-  dispatchEvent = (...args) => this.parent.dispatchEvent(...args);
-
-  protected _error: string;
-  protected _validate: (value: any) => string;
+  
+  private updateEvent = new Publisher();
+  private _parent: BranchNode | RootNode;
+  private _name: string;
+  private _root: RootNode;
+  private _validate: (value: any) => string;
+  private _error: string;
+  private _dirty = false;
+  private _touched = false;
 
   constructor(
-    protected parent: BranchNode | RootNode,
-    protected name: string
+    parent: BranchNode | RootNode,
+    name: string,
+    validate: (value: any) => string
   ) {
+
+    this._parent = parent;
+    this._name = name;
+    this._root = parent.root;
+    this._validate = validate;
     
     this.handleAction = this.handleAction.bind(this);
   }
 
+  get parent() { return this._parent; }
+  get name() { return this._name; }
+  get root() { return this._root; }
+  get error() { return this._error; }
+  get dirty() { return this._dirty; }
+  get touched() { return this._touched; }
+
   get value() {
-    const { parent, name } = this;
-    return parent.values?.[name];
+    return this.parent.values[this.name];
   }
 
   set value(value) {
@@ -29,67 +42,53 @@ export default class InputNode {
     if (parent.values == null) parent.values = {};
     parent.values[name] = value;
 
-    this.dirty = true;
-    dispatchEvent('change', this);
+    this._dirty = true;
+    parent.dispatchEvent('change', this);
   }
 
-  get initialValue() {
-    const { parent, name } = this;
-    return parent.initialValues?.[name];
+  private getError() {
+    const error = this._validate?.(this.value);
+    if (error) this.root.dispatchEvent('error');
+    return error || this.parent.errors?.[this.name];
   }
 
-  get error() {
-    return this._error;
+  private update() {
+    this.updateEvent.pusblish();
   }
 
-  set validate(value) {
-    const { _validate } = this;
-    if (_validate === value) return;
-    this._validate = value;
-    const { parent, name, _error, update } = this;
-    const error = _validate?.(value) || parent.errors?.[name];
-    if (_error != error) {
-      this._error = error;
-      update();
-    }
-  }
-
-  handleAction(action: string, ...params: any[]) {
+  private handleAction(action: string, ...params: any[]) {
 
     switch (action) {
 
       case 'validate': {
         const [initiator] = params;
-        const { _validate, value, name, _error, update } = this;
-        const error = _validate?.(value) || parent.errors?.[name];
-        if (_error != error || initiator === this) {
+        const error = this.getError();
+        if (this.error != error || initiator === this) {
           this._error = error;
-          update();
+          this.update();
         }
       }
 
       case 'reset': {
-        const [prevValues] = params;
-        const { _validate, value, name, _error, dirty, touched, update } = this;
-        const error = _validate?.(value) || parent.errors?.[name];
+        const [previousValues] = params;
+        const error = this.getError();
         if (
-            _error != error
-            || dirty || touched
-            || prevValues?.[name] != value
+          this.error != error
+          || this.dirty || this.touched
+          || previousValues?.[this.name] != this.value
         ) {
           this._error = error;
-          this.dirty = false;
-          this.touched = false;
-          update();
+          this._dirty = false;
+          this._touched = false;
+          this.update();
         }
       }
 
       case 'submit': {
-        const { _error, dirty, touched, update } = this;
-        if (_error && (!dirty || !touched)) {
-          this.dirty = true;
-          this.touched = true;
-          update();
+        if (this.error && (!this.dirty || !this.touched)) {
+          this._dirty = true;
+          this._touched = true;
+          this.update();
         }
       }
 

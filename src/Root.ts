@@ -21,12 +21,24 @@ export default class RootNode {
     this.submit = this.submit.bind(this);
   }
 
-  dispatchEvent(event: string, ...args: any[]) {
+  get root() {
+    return this;
+  }
+
+  dispatchEvent(event: string, ...params: any[]) {
     switch (event) {
+
       case 'change': {
+        const [value, node, ...nodes] = params;
+        this._values[node.name] = value;
+
         this.valid = true;
-        this.validate(); 
-        this.eventEmmiter.publish('validate', ...args);
+        this.validate();
+        this.eventEmmiter.publish('validate', this._values, node, ...nodes);
+      }
+
+      case 'error': {
+        this.valid = false;
       }
     }
   }
