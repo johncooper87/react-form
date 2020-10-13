@@ -1,70 +1,79 @@
-
+import { Branch } from './types';
 
 export default class RootNode {
 
-  values: { [key: string]: any } | any[] = {};
-
+  updateEvent = new Publisher();
+  action = new Publisher();
+  values: Branch;
+  errors: Branch;
   valid = true;
-  errors = undefined;
-  initialValues = {};
-  _validate = undefined;
-  handleSubmit = undefined;
-  submitErrors = undefined;
+  root = this;
+  submitErrors: any;
+  dirty = false;
+  touched = false;
 
-  eventEmmiter = new Publisher();
-
-  constructor(handleSubmit, validate) {
-    this.handleSubmit = handleSubmit;
-    this._validate = validate;
+  constructor(
+    public handleSubmit: (values: Branch) =>  Promise<any>,
+    public initialValues = {},
+    public validate: (values: Branch) => Branch
+  ) {
     
     this.reset = this.reset.bind(this);
     this.submit = this.submit.bind(this);
   }
 
-  get root() {
-    return this;
+  revalidate() {
+    let errors = this.validate?.(this.values);
+    if (errors) this.valid = false;
+    this.errors = errors;
   }
 
   dispatchEvent(event: string, ...params: any[]) {
     switch (event) {
 
       case 'change': {
-        const [value, node, ...nodes] = params;
-        this._values[node.name] = value;
-
         this.valid = true;
-        this.validate();
-        this.eventEmmiter.publish('validate', this._values, node, ...nodes);
-      }
-
-      case 'error': {
-        this.valid = false;
+        this.dirty = true;
+        this.revalidate();
+        this.action.publish('validate', ...params);
       }
     }
   }
 
-  validate() {
-    this.errors = this._validate?.(this.values);
+  __RELEASE() {
+  }
+
+  update() {
+    this.updateEvent.pusblish();
   }
 
   reset(initialValues) {
-    const prevValues = this.values;
 
-    if (initialValues != null) this.initialValues = initialValues;
+    if (initialValues != null) {
+      if (initialValues === this.initialValues) return;
+      this.initialValues = initialValues;
+    }
+    const lastValues = this.values;
     this.values = copy(this.initialValues);
     this.valid = true;
-    this.validate();
+    this.revalidate();
 
-    this.eventEmmiter.publish('reset', prevValues);
+    this.action.publish('reset', lastValues);
+
+    this.dirty = false;
+    this.touched = false;
+    this.update();
   }
 
   async submit() {
-    this.eventEmmiter.publish('submit');
+    this.action.publish('submit');
+
+    this.touched = false;
+    this.update();
+
     if (this.valid) {
       this.submitErrors = await this.handleSubmit?.(this.values);
-      this.eventEmmiter.publish('complete');
-      // if (this.submitErrors == null) this.onSubmitted?.(this.values);
-      // else this.onSubmitErrors?.(this.submitErrors, this.values);
+      this.action.publish('complete');
     }
   }
 

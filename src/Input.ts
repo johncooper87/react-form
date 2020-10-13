@@ -1,31 +1,42 @@
 import RootNode from "./Root";
 import BranchNode from "./Branch";
+//import {  } from './types';
 
-export default class InputNode {
+export default class InputNode<T = any> {
   
-  action = new Publisher();
+  updateEvent = new Publisher();
   root: RootNode;
   error: string;
   dirty = false;
   touched = false;
+  unsubscribe: () => void;
 
   constructor(
     public parent: BranchNode | RootNode,
     public name: string,
-    public validate: (value: any) => string
+    public validate: (value: T) => string
   ) {
 
     this.root = parent.root;
     this.revalidate();
     
     this.handleAction = this.handleAction.bind(this);
+    this.unsubscribe = this.parent.action.subscribe(this.handleAction);
   }
 
-  get value() {
+  __RELEASE() {
+    if (this.updateEvent.count > 0) return;
+    this.unsubscribe();
+    this.parent.__RELEASE();
+    this.parent = undefined;
+    this.root = undefined;
+  }
+
+  get value(): T {
     return this.parent.values?.[this.name];
   }
 
-  set value(value) {
+  set value(value: T) {
     const { parent, name } = this;
     if (parent.values == null) parent.values = {};
     parent.values[name] = value;
@@ -36,7 +47,7 @@ export default class InputNode {
 
   revalidate() {
     let error = this.validate?.(this.value);
-    if (error) this.root.dispatchEvent('error');
+    if (error) this.root.valid = false;
     error = error || this.parent.errors?.[this.name];
     if (this.error != error) {
       this.error = error;
@@ -46,7 +57,7 @@ export default class InputNode {
   }
 
   update() {
-    this.action.pusblish();
+    this.updateEvent.pusblish();
   }
 
   handleAction(action: string, ...params: any[]) {
