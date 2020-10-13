@@ -1,3 +1,4 @@
+import { Publisher } from 'pubsub';
 import RootNode from "./Root";
 import BranchNode from "./Branch";
 //import {  } from './types';
@@ -14,9 +15,10 @@ export default class InputNode<T = any> {
   constructor(
     public parent: BranchNode | RootNode,
     public name: string,
-    public validate: (value: T) => string
+    public validate?: (value: T) => string
   ) {
 
+    this.parent.children.set(name, this);
     this.root = parent.root;
     this.revalidate();
     
@@ -25,8 +27,9 @@ export default class InputNode<T = any> {
   }
 
   __RELEASE() {
-    if (this.updateEvent.count > 0) return;
+    if (this.updateEvent.isEmpty) return;
     this.unsubscribe();
+    this.parent.children.delete(this.name);
     this.parent.__RELEASE();
     this.parent = undefined;
     this.root = undefined;
@@ -57,7 +60,7 @@ export default class InputNode<T = any> {
   }
 
   update() {
-    this.updateEvent.pusblish();
+    this.updateEvent.publish();
   }
 
   handleAction(action: string, ...params: any[]) {

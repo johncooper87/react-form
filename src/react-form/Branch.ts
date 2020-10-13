@@ -1,3 +1,5 @@
+import { Publisher } from 'pubsub';
+import InputNode from "./Input";
 import RootNode from "./Root";
 import { Branch } from './types';
 
@@ -6,6 +8,7 @@ export default class BranchNode {
   updateEvent = new Publisher();
   action = new Publisher();
   root: RootNode;
+  children = new Map<string, InputNode | BranchNode>();
   _values: Branch;
   errors: Branch;
   dirty = false;
@@ -15,9 +18,10 @@ export default class BranchNode {
   constructor(
     public parent: BranchNode | RootNode,
     public name: string,
-    public validate: (values: Branch) => Branch
+    public validate?: (values: Branch) => Branch
   ) {
 
+    this.parent.children.set(name, this);
     this.root = parent.root;
     this._values = parent.values;
     this.revalidate();
@@ -27,8 +31,9 @@ export default class BranchNode {
   }
 
   __RELEASE() {
-    if (this.updateEvent.count > 0) return;
+    if (this.updateEvent.isEmpty) return;
     this.unsubscribe();
+    this.parent.children.delete(this.name);
     this.parent.__RELEASE();
     this.parent = undefined;
     this.root = undefined;
@@ -72,7 +77,7 @@ export default class BranchNode {
   }
 
   update() {
-    this.updateEvent.pusblish();
+    this.updateEvent.publish();
   }
 
   handleAction(action: string, ...params: any[]) {

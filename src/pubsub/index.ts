@@ -26,4 +26,8 @@ export class Publisher {
       else callback(...args);
     }
   }
+
+  get isEmpty() {
+    return this.callbacks.size > 0;
+  }
 }

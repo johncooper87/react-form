@@ -1,3 +1,7 @@
+import { copy } from 'object-ops/copy';
+import { Publisher } from 'pubsub';
+import InputNode from "./Input";
+import BranchNode from "./Branch";
 import { Branch } from './types';
 
 export default class RootNode {
@@ -8,6 +12,7 @@ export default class RootNode {
   errors: Branch;
   valid = true;
   root = this;
+  children = new Map<string, InputNode | BranchNode>();
   submitErrors: any;
   dirty = false;
   touched = false;
@@ -15,7 +20,7 @@ export default class RootNode {
   constructor(
     public handleSubmit: (values: Branch) =>  Promise<any>,
     public initialValues = {},
-    public validate: (values: Branch) => Branch
+    public validate?: (values: Branch) => Branch
   ) {
     
     this.reset = this.reset.bind(this);
@@ -44,7 +49,7 @@ export default class RootNode {
   }
 
   update() {
-    this.updateEvent.pusblish();
+    this.updateEvent.publish();
   }
 
   reset(initialValues) {
