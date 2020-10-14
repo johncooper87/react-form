@@ -1,3 +1,5 @@
+//@ts-check
+
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -8,7 +10,8 @@ const cssLoader = {
     modules: {
       auto: () => true,
       localIdentContext: path.resolve(__dirname, 'src'),
-      localIdentName: '[path][name]__[local]--[hash:base64:5]',
+      localIdentName: '[path][name]__[local]',
+      //localIdentName: '[path][name]__[local]--[hash:base64:5]',
     },
   },
 };
