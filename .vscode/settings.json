@@ -1,7 +1,7 @@
 {
-  "typescript.tsdk": "example/node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "typescript.tsserver.pluginPaths": ["typescript-plugin-css-modules"],
+  //"typescript.tsdk": "example/node_modules/typescript/lib",
+  //"typescript.enablePromptUseWorkspaceTsdk": true,
+  //"typescript.tsserver.pluginPaths": ["typescript-plugin-css-modules"],
 
   "javascript.referencesCodeLens.enabled": false,
   "javascript.implicitProjectConfig.checkJs": true,
