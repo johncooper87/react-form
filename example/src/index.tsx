@@ -1,40 +1,46 @@
-import React from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Observable, useObservable } from '../../dist';
+import styles1 from './styles1.css';
 
-const observable1 = new Observable(0);
-const observable2 = new Observable(1);
+// function wait(ms) {
+//   return new Promise(
+//     resolve => {
+//       setTimeout(
+//         () => resolve(),
+//         ms
+//       );
+//     }
+//   );
+// }
 
-observable2.subscribe((newValue, oldValue) => {
-  console.log('newValue:', newValue);
-  console.log('oldValue:', oldValue);
-});
+// const Comp1 = lazy(async () => {
+//   await wait(2000);
+//   return import('./Comp1');
+// });
 
-function outerClick() {
-  console.log('click outer');
-  observable1.value++;
-  observable2.value++;
-}
+const Comp1 = lazy(() => import('./Comp1'));
 
-function innerClick() {
-  console.log('click inner');
-  observable2.value++;
-}
+// function aaa() {
+//   const b = 5;
+//   return 2;
+// }
 
-const outerClick1 = () => setTimeout(outerClick, 0);
-const innerClick1 = () => setTimeout(innerClick, 0);
+// aaa();
 
 function App() {
   console.log('App');
-  const ttt = useObservable(observable1);
-  const lll = useObservable(observable2);
+  const a = 5;
 
-  return <div style={{ padding: '24px', backgroundColor: 'yellow', width: '96px' }} onClick={outerClick1} >
-    <div style={{ padding: '12px', backgroundColor: 'red' }} onClick={innerClick1} >
-      num1: {ttt}
-      <br />
-      num2: {lll}
+  const [showComp1, setShowComp1] = useState(false);
+
+  return <div className={styles1.root1}>
+    Hello World!
+    <div>
+      <button onClick={() => setShowComp1(show => !show)}>show comp1</button>
     </div>
+    <Suspense fallback={<div>loading ...</div>}>
+      {showComp1 && <Comp1 />}
+    </Suspense>
   </div>;
 }
 
