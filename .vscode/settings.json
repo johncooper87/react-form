@@ -1,5 +1,5 @@
 {
-  //"typescript.tsdk": "example/node_modules/typescript/lib",
+  "typescript.tsdk": "example/node_modules/typescript/lib",
   //"typescript.enablePromptUseWorkspaceTsdk": true,
   //"typescript.tsserver.pluginPaths": ["typescript-plugin-css-modules"],
 
